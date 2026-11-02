@@ -1,0 +1,240 @@
+% !TeX program = xelatex
+\documentclass[11pt]{article}
+\input{paper_setup.tex}
+\title{An Alternative Proof of Quintic SPR Synthesis by Finite Moment Certificates}
+\hypersetup{pdftitle={An Alternative Proof of Quintic SPR Synthesis by Finite Moment Certificates}}
+\begin{document}
+\maketitle
+\begin{abstract}
+The SPR synthesis theorem for fifth-order polynomial segments was established by Yu and Wang using elliptic regions and separating tangent planes. We give a different proof, formalized independently in Lean, based on compact frequency constraints, a continuous max--min transition, and finite moment certificates. Failure of synthesis produces a nonzero weak supporting numerator and a finite positive balance of contact constraints. Residue interpolation converts this balance into a polynomial identity. In the coprime case, divisibility gives a degree lower bound incompatible with the number of contacts; common-root and proportional cases are treated separately. The proof uses neither an a priori six-atom certificate bound nor a constant interpolation multiplier. Necessity follows from imaginary-axis exclusion and a continuous Routh--Hurwitz margin. The checked theorem uses an explicit quintic coefficient predicate. This is an alternative proof of an established theorem, within the separation-and-interpolation framework of the supplied arbitrary-order manuscript, not a claim that the synthesis criterion is new.
+\end{abstract}
+\noindent\textbf{Keywords:} strictly positive real synthesis; quintic polynomial; convex separation; moment certificate; residue interpolation; Lean.
+
+\section{Introduction and comparison with prior work}
+Yu and Wang proved the fifth-order segment synthesis theorem in \cite{yuWang2001Quintic}. Their proof constructs two elliptic regions on planes in a three-dimensional coefficient space, forms connecting segments, and rules out separation by a common tangent plane. A small constant is then added to a fourth-order numerator, followed by a degree-raising perturbation. The resulting criterion is the equivalence between stability of the entire denominator segment and existence of one common fifth-order SPR numerator.
+
+The proof in \code{SPR/simplified/n5.lean} follows a different route. It works directly with all six numerator coefficients. Frequencies are compactified, failure of strict feasibility is expressed by a convex balance, and the balance is contradicted using moments and polynomial degrees. No elliptic numerator region or tangent-plane equation is used. Thus the article presents an alternative proof method relative to \cite{yuWang2001Quintic}, rather than a formal transcription of that proof.
+
+The broader separation-and-interpolation strategy is shared with the supplied arbitrary-order manuscript \cite{referenceDraft}. The quintic contribution described here is its concrete coefficient-level organization: a continuous max--min construction of a critical certificate, a direct coprime degree contradiction, and explicit treatment of the common-root and proportional degeneracies. We do not assert that these standard tools, or the broad certificate framework itself, originate in this paper. The Lean file imports only Mathlib and invokes no arbitrary-order SPR synthesis theorem.
+
+\section{The verified statement and its frequency form}
+Let
+\[
+ a(s)=s^5+a_1s^4+a_2s^3+a_3s^2+a_4s+a_5,
+ \qquad p_\lambda=(1-\lambda)a+\lambda b,
+\]
+where $b$ has the same monic form. Define
+\begin{align}
+ \Delta_2(a)&=a_1a_2-a_3,\\
+ \Delta_3(a)&=a_1a_2a_3-a_1^2a_4-a_3^2+a_1a_5,\\
+ \Delta_4(a)&=a_4\Delta_3(a)
+ -a_5(a_1a_2^2-a_1a_4-a_2a_3+a_5).
+\end{align}
+Write $H_5(a)$ when $a_j>0$ for $1\le j\le5$ and $\Delta_2(a),\Delta_3(a),\Delta_4(a)>0$. These are the strict quintic Routh--Hurwitz coefficient conditions. The Lean file defines stability by these inequalities; it does not establish their general equivalence with a complex-root definition. This distinction fixes the exact scope of the verified theorem.
+
+For a monic quintic $c$, the predicate $\SPR(c,a)$ means $H_5(a)$ and
+\[
+ \Repart\frac{c(i\omega)}{a(i\omega)}>0\qquad(\omega\in\R).
+\]
+The coefficient conditions imply that $a$ has no imaginary-axis zero, as is also proved directly in the file. Monic equal-degree quotients have limit $1$ at infinity.
+
+\begin{theorem}[Quintic segment criterion]\label{thm:main}
+For monic real quintics $a,b$,
+\begin{equation}
+ \exists\text{ monic quintic }c:\ \SPR(c,a)\land\SPR(c,b)
+ \quad\Longleftrightarrow\quad
+ H_5(p_\lambda)\quad\text{for all }\lambda\in[0,1].
+\end{equation}
+\end{theorem}
+
+For a denominator $p$ define its signed even and odd parts by
+\begin{equation}\label{eq:parts}
+ A_p(t)=p_1t^2-p_3t+p_5,\qquad B_p(t)=t^2-p_2t+p_4.
+\end{equation}
+For a general numerator $h(s)=h_0s^5+h_1s^4+\cdots+h_5$ put
+\begin{equation}\label{eq:supportparts}
+ E(t)=h_1t^2-h_3t+h_5,\qquad O(t)=h_0t^2-h_2t+h_4.
+\end{equation}
+Then $h(i\omega)=E(\omega^2)+i\omega O(\omega^2)$, and
+\begin{equation}\label{eq:cross}
+ Q_{p,h}(t)=A_p(t)E(t)+tB_p(t)O(t),\qquad
+ \Repart\frac{h(i\omega)}{p(i\omega)}=\frac{Q_{p,h}(\omega^2)}{|p(i\omega)|^2}.
+\end{equation}
+In particular, $Q_{p,h}$ is linear in $h$ and affine in $p$.
+
+\section{Compact constraints and the transition certificate}
+Define the feature vector
+\begin{equation}\label{eq:feature}
+ f_p(t)=\bigl(t^3B_p(t),\ t^2A_p(t),\ -t^2B_p(t),\ -tA_p(t),\ tB_p(t),\ A_p(t)\bigr),
+\end{equation}
+so $h\cdot f_p(t)=Q_{p,h}(t)$. With $x=t/(1+t)$, set
+\[
+ \widehat f_p(x)=(1-x)^5f_p\!\left(\frac{x}{1-x}\right)\quad(0\le x<1),
+ \qquad \widehat f_p(1)=(1,0,0,0,0,0).
+\]
+Each coordinate extends polynomially to $[0,1]$. The endpoint $x=1$ enforces positivity of the leading numerator coefficient. Thus a strictly positive separating vector for the compact union of the two feature curves gives a quintic numerator that can be normalized to monic form.
+
+Assume the segment is stable and synthesis fails. Move the second endpoint as $b_u=(1-u)a+ub$, and let
+\[
+ F_u=\widehat f_a([0,1])\cup\widehat f_{b_u}([0,1]),\qquad
+ \gamma(u)=\max_{\|v\|=1}\min_{z\in F_u}v\cdot z.
+\]
+Joint continuity and compactness imply continuity of $\gamma$, and both extrema exist. At $u=0$, the numerator $a$ gives strict positivity, so $\gamma(0)>0$. Failure at $u=1$ gives $\gamma(1)\le0$. The intermediate value theorem supplies $u_*$ with $\gamma(u_*)=0$. Relabel $b_{u_*}$ as $b$ for the certificate argument; the relabeled segment remains stable.
+
+\begin{lemma}[Critical certificate]\label{lem:certificate}
+There exist a nonzero vector $h$ and finitely many $z_i\in F_{u_*}$ with positive weights $\alpha_i$ such that
+\begin{equation}\label{eq:certificate}
+ h\cdot z\ge0\ (z\in F_{u_*}),\qquad
+ \sum_i\alpha_i=1,\qquad\sum_i\alpha_i z_i=0,\qquad h\cdot z_i=0.
+\end{equation}
+\end{lemma}
+\begin{proof}
+An optimizer of unit norm gives the weak supporting vector. If $0$ were outside the compact convex hull of $F_{u_*}$, strict separation would give a strictly positive direction, contradicting $\gamma(u_*)=0$. A finite convex representation of zero exists; remove terms of zero weight. Taking its inner product with $h$ proves contact at every atom because all summands are nonnegative.
+\end{proof}
+Carath\'eodory's theorem is used to justify compactness and finite representation of the convex hull. The later algebra needs only finiteness, not a six- or seven-atom bound.
+
+Decompactify each finite atom and absorb $(1-x_i)^5$ into its weight. Merge atoms with the same $t\ge0$. The finite node set is $S$, the total weight at $r\in S$ is $\rho_r>0$, and the averaged denominator $p_r$ is a convex combination of the two endpoints. Hence $H_5(p_r)$ holds. Let $\eta\ge0$ be the total weight at infinity. The resulting data satisfy
+\begin{align}
+ &Q_{p_r,h}(r)=0,\qquad \eta h_0=0,\label{eq:contact}\\
+ &\sum_{r\in S}r^j z_r=0\quad(j=0,1,2),\label{eq:evenmom}\\
+ &\sum_{r\in S}r^j w_r=0\quad(j=0,1),\qquad
+ \sum_{r\in S}r^2 w_r=-\eta,\label{eq:oddmom}
+\end{align}
+where
+\begin{equation}\label{eq:residues}
+ z_r=\rho_r A_{p_r}(r),\qquad w_r=\rho_r rB_{p_r}(r).
+\end{equation}
+There is at least one finite node, since a positive combination of infinity feature vectors alone cannot be zero.
+
+\section{Weak support and contact-count bounds}
+The denominator inequalities give two positive roots of each quadratic in \eqref{eq:parts}, ordered as
+\begin{equation}\label{eq:interlacing}
+ 0<e_1<o_1<e_2<o_2,
+ \quad A_p(e_1)=A_p(e_2)=B_p(o_1)=B_p(o_2)=0.
+\end{equation}
+This interlacing is proved algebraically in Lean. One useful identity is obtained by setting $D=\Delta_2(p)$ and $M=p_1p_4-p_5$:
+\[
+ \Delta_4=p_2DM-M^2-p_4D^2,
+ \qquad p_1B_p(t)-A_p(t)=M-Dt.
+\]
+It gives $M>0$ and $B_p(M/D)<0$; evaluations at the two odd roots then place the even roots as in \eqref{eq:interlacing}.
+
+\begin{lemma}[Support properties]\label{lem:support}
+For a critical certificate over a stable segment,
+\begin{equation}\label{eq:supportproperties}
+ h_j\ge0\ (0\le j\le5),\qquad h_1>0,\qquad E\ne0,\quad O\ne0.
+\end{equation}
+The endpoint polynomials $Q_{a,h}$ and $Q_{b,h}$ are nonzero and nonnegative on $[0,\infty)$.
+\end{lemma}
+\begin{proof}
+The compact constraint at infinity gives $h_0\ge0$, and the zero-frequency constraint gives $h_5\ge0$. Evaluating weak positivity at the four interlacing nodes yields
+\[
+ O(e_1)\ge0,\quad O(e_2)\le0,\qquad
+ E(o_1)\le0,\quad E(o_2)\ge0.
+\]
+The quadratic sign inequalities, together with $h_0,h_5\ge0$, imply the remaining coefficient inequalities.
+
+The pure-component cases require the balance equations, not just weak positivity. If $E=0$, nonnegativity forces $O$ to be a positive multiple of the odd part of a stable denominator: at each of its simple positive roots, failure of a coincident root would change the sign of $tB_pO$. The same argument locks the odd roots of every merged denominator to these two roots. Every contact node is then either zero or one of those roots, so $|S|\le3$. At these nodes $A_{p_r}(r)\ne0$. But the three moments in \eqref{eq:evenmom} form an invertible Vandermonde system and force all $z_r=0$, a contradiction. If $O=0$, the analogous even-root locking gives at most two nodes, all positive, and the first two odd moments force nonzero odd residues to vanish. Thus neither component is zero.
+
+If $h_1=0$, the two displayed signs for $E$, with $h_3,h_5\ge0$, force $h_3=h_5=0$, contrary to $E\ne0$. Hence $\deg E=2$. Finally, if $Q_{p,h}$ vanished identically, its leading coefficient would give $h_0=0$. Evaluation at the two even roots of $p$ would force the now linear $O$ to vanish identically, and then $A_pE=0$, impossible. Nonnegativity follows directly from the supporting constraints.
+\end{proof}
+
+Every finite certificate node is a zero of at least one endpoint cross polynomial. A positive root of a polynomial nonnegative on $[0,\infty)$ has multiplicity at least two. A zero root may be simple and must be counted separately. This gives
+\begin{equation}\label{eq:counts}
+ |S|\le5,\qquad h_0=0\Longrightarrow |S|\le4.
+\end{equation}
+Indeed, a degree-five polynomial has at most two strictly positive roots, with a possible additional zero root; the union of two such root sets has at most five elements because the zero node is shared when present in both. A degree-four polynomial has at most two nonnegative roots. The case $h_0=0$ reduces both cross degrees to at most four.
+
+If $E$ and $O$ have a common nonnegative root $r_0$, both endpoint cross polynomials vanish there. The shared root improves the bounds to
+\begin{equation}\label{eq:sharedcounts}
+ |S|\le4,\qquad h_0=0\Longrightarrow |S|\le3.
+\end{equation}
+For $r_0>0$ this follows by subtracting a shared positive root from the union count. For $r_0=0$, $h_5=h_4=0$. The derivative at zero is $-p_5h_3$, which must be nonnegative; $h_3\ge0$ therefore gives $h_3=0$. Zero is consequently a double root of both cross polynomials, yielding the same bounds. This handles the boundary frequency without assuming it is an interior local minimum.
+
+\section{Residue interpolation and the central identity}
+For $m=|S|$ put
+\[
+ D_S(T)=\prod_{r\in S}(T-r),\qquad
+ U(T)=\sum_{r\in S}z_r\prod_{q\in S\setminus\{r\}}(T-q),\qquad
+ V(T)=\sum_{r\in S}w_r\prod_{q\in S\setminus\{r\}}(T-q).
+\]
+Then $U(r)=z_rD_S'(r)$ and $V(r)=w_rD_S'(r)$, with $D_S'(r)\ne0$. The moment identities cancel the highest coefficients and give
+\begin{equation}\label{eq:degrees}
+ \deg U<m-3,\qquad\deg V<m-2,\qquad
+ \eta=0\Longrightarrow\deg V<m-3.
+\end{equation}
+These inequalities use $\deg0=-\infty$. For a nonzero $V$ they mean $\deg V+2<m$, or $\deg V+3<m$ when $\eta=0$.
+
+\begin{lemma}\label{lem:identity}
+The certificate satisfies
+\begin{equation}\label{eq:identity}
+ EU+OV=0,\qquad V\ne0.
+\end{equation}
+\end{lemma}
+\begin{proof}
+The polynomial on the left vanishes at every $r\in S$ by \eqref{eq:contact} and \eqref{eq:residues}. Its degree is less than $m$ by \eqref{eq:degrees} and $\deg E,\deg O\le2$, so it is identically zero.
+
+If $V=0$, evaluating at the nodes gives $w_r=0$. Then either $r=0$ or $B_{p_r}(r)=0$, and in either case $A_{p_r}(r)\ne0$. The contact equation forces $E(r)=0$, so $|S|\le2$. The even moments now force $z_r=0$, contradicting $\rho_r>0$ and $A_{p_r}(r)\ne0$.
+\end{proof}
+
+\section{Exclusion of every certificate}
+\subsection{Coprime even and odd parts}
+If $E,O$ are coprime, \eqref{eq:identity} gives $E\mid V$. As $\deg E=2$ and $V\ne0$, $\deg V\ge2$. If $\eta=0$, \eqref{eq:degrees} gives $m>\deg V+3\ge5$, contradicting \eqref{eq:counts}. If $\eta>0$, \eqref{eq:contact} gives $h_0=0$, and hence $m>\deg V+2\ge4$ contradicts $m\le4$. This direct divisibility argument needs no constant-multiplier lemma.
+
+\subsection{A common root without proportionality}
+If $E,O$ are not coprime, polynomial division by the quadratic $E$ shows that either $O=kE$ or the two have a common real root. In the latter case the nonzero remainder is linear. Because $h_1>0$ and $h_3,h_5\ge0$, $E(t)>0$ for $t<0$, so a common real root $r_0$ is nonnegative.
+
+Suppose $O$ is not proportional to $E$. Cancel the common factor $T-r_0$ in \eqref{eq:identity}. The residual linear factor of $E$ is coprime to the residual factor of $O$; otherwise the two original quadratics would be proportional. Therefore that linear factor divides $V$, and $\deg V\ge1$. If $\eta=0$, the moments give $m>4$, contradicting \eqref{eq:sharedcounts}. If $\eta>0$, they give $m>3$, contradicting the corresponding bound $m\le3$.
+
+\subsection{Proportional parts}
+It remains to treat $O=kE$. Lemma~\ref{lem:support} gives $k>0$ and $h_0=kh_1>0$, so $\eta=0$. Equation \eqref{eq:identity} becomes $U+kV=0$. Evaluation at a node yields
+\begin{equation}\label{eq:kernel}
+ A_{p_r}(r)+krB_{p_r}(r)=0.
+\end{equation}
+We need the following implication, which prevents a non-root contact of $E$.
+
+\begin{lemma}\label{lem:kernel}
+Let $p$ satisfy $H_5$, let $k>0$, and let $E$ be quadratic with positive leading coefficient. Suppose $E(t)K_p(t)\ge0$ for $t\ge0$, where $K_p=A_p+ktB_p$. If $K_p(r)=0$ for $r\ge0$, then $E(r)=0$.
+\end{lemma}
+\begin{proof}
+At the interlacing nodes of $p$, the signs of $K_p$ are respectively $+,-,-,+$. Thus $E$ has roots $x_1\in[e_1,o_1]$ and $x_2\in[e_2,o_2]$, with $0<x_1<x_2$. These are all its roots. The sign of $E$ is positive outside $[x_1,x_2]$ and negative inside, so $K_p$ is nonnegative outside and nonpositive inside. Continuity gives $K_p(x_1)=K_p(x_2)=0$. A further nonnegative root $r$ is not zero since $K_p(0)=p_5>0$. If distinct from $x_1,x_2$, it is a local extremum in an interval of fixed sign and hence a double root. This would give at least four roots counting multiplicity for the cubic $K_p$, a contradiction.
+\end{proof}
+
+Apply the lemma to each merged denominator, since $Q_{p_r,h}=E K_{p_r}\ge0$. Equation \eqref{eq:kernel} shows $S\subseteq\{E=0\}$ and $m\le2$. The three even moments force all $z_r=0$, and $U+kV=0$ gives all $w_r=0$. At a node, $A_{p_r}(r)=0$ excludes $r=0$ because $p_{r,5}>0$; then $w_r=0$ also implies $B_{p_r}(r)=0$. This contradicts the imaginary-axis nonvanishing of $p_r$.
+
+All algebraic possibilities have been excluded. Lemma~\ref{lem:certificate} therefore contradicts failure of synthesis and proves the sufficient direction of Theorem~\ref{thm:main}.
+
+\section{Necessity without an assumed numerator-stability theorem}
+Suppose a common monic quintic $c$ exists. Endpoint positivity gives
+\[
+ \Repart\bigl(c(i\omega)\overline{p_\lambda(i\omega)}\bigr)>0
+\]
+by affinity in $p_\lambda$. Thus no $p_\lambda$ has an imaginary-axis zero. To turn this into the coefficient stability predicate, the formal proof uses a continuous scalar margin.
+
+Besides the five coefficients and the three Hurwitz determinants, put
+\[
+ M=p_1p_4-p_5,\qquad L=p_4p_3-p_2p_5,\qquad D=\Delta_2(p).
+\]
+For a stable quintic, $M,L,p_2^2-4p_4$ are positive. Define $\mu(p)$ to be the minimum of these eleven quantities. Then $H_5(p)$ is equivalent to $\mu(p)>0$. The key boundary lemma says that $\mu(p)\ge0$ and absence of imaginary-axis roots imply $H_5(p)$. Its algebra rests on
+\begin{equation}\label{eq:boundary}
+ \Delta_4=LD-M^2=p_2DM-M^2-p_4D^2.
+\end{equation}
+Here are the details of the boundary exclusion. Absence of an axis root gives $p_5>0$. Then $M\ge0$ implies $p_1,p_4>0$; the nonnegative odd discriminant gives $p_2>0$, and $L\ge0$ gives $p_3>0$. If $D=0$, \eqref{eq:boundary} forces $M=0$, so $A_p=p_1B_p$. The odd discriminant and positive coefficients ensure that $B_p$ has a positive real root, giving an axis root of $p$. Thus $D>0$. If $M=0$, the second identity in \eqref{eq:boundary} would give $\Delta_4=-p_4D^2<0$, so $M>0$. If $\Delta_4=0$, the frequency $t=M/D>0$ satisfies $B_p(t)=0$ by that identity, and $A_p(t)=0$ by $p_1B_p-A_p=M-Dt$, again impossible.
+
+Finally, if $\Delta_3=0$, the identity
+\[
+ \Delta_4=p_4\Delta_3-p_5(p_2D-M)>0
+\]
+implies $p_2D-M<0$. But \eqref{eq:boundary} also gives $\Delta_4=M(p_2D-M)-p_4D^2<0$, a contradiction. Therefore all five coefficients and all three determinants are strictly positive. This proves the boundary lemma and implies $\mu(p)>0$. A boundary point with $\mu=0$ is consequently impossible without an imaginary-axis root.
+
+Since $\mu(p_0)>0$ and $\lambda\mapsto\mu(p_\lambda)$ is continuous, a nonpositive value would yield a zero value by the intermediate value theorem. The boundary lemma and imaginary-axis exclusion rule this out. This proves necessity. Finally, the same affine cross-product identity and stability show that the common numerator works over the entire segment, as a direct mathematical corollary.
+
+\section{Formal verification}
+The proof presented in this paper has been formally verified in Lean. The code repository is \url{https://github.com/XPiPiT/n_random/tree/main/SPR/simplified}.
+
+\section{Conclusion}
+The quintic criterion follows from an incompatibility between finite contact counts and interpolation degrees. A continuous max--min transition creates the certificate, three even moments and two or three odd moments restrict its residue polynomials, and a complete algebraic case split excludes every weak support. This is a formally verified alternative to the original elliptic-region proof of the established synthesis theorem.
+
+\bibliographystyle{IEEEtran}
+\bibliography{spr_references}
+\end{document}
